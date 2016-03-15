@@ -3,16 +3,15 @@ package io.github.duke605.qrdemo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.SparseArray;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
-
 import com.google.android.gms.vision.CameraSource;
-import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
-public class MainActivity extends AppCompatActivity {
+import io.github.duke605.qrdemo.contract.IDetected;
+
+public class MainActivity extends AppCompatActivity implements IDetected {
 
     private SurfaceView preview;
     private TextView text;
@@ -35,54 +34,21 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         cameraSource = new CameraSource.Builder(this, barcodeDetector)
+                .setRequestedPreviewSize(700, 700)
+                .setAutoFocusEnabled(true)
                 .build();
 
-        preview.getHolder().addCallback(new SurfaceHolder.Callback() {
+        preview.getHolder().addCallback(new SurfaceHandler(cameraSource));
+        barcodeDetector.setProcessor(new BarcodeProcessor(this));
+    }
+
+    @Override
+    public void barcodeDetected(final SparseArray<Barcode> barcodes) {
+        text.post(new Runnable() {
 
             @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-
-                // Starting camera preview
-                try {
-                    cameraSource.start(holder);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-
-                // Stopping camera preview
-                cameraSource.stop();
-            }
-        });
-
-        barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
-            @Override
-            public void release() {}
-
-            @Override
-            public void receiveDetections(Detector.Detections<Barcode> detections) {
-
-                // Final because this can't be accessed in another thread if its not
-                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-
-                if (barcodes.size() != 0) {
-
-                    // This has to be posted to the thread it came from because no other thread
-                    // (we're in another thread right now) can modify the view except the one
-                    // it was created on
-                    text.post(new Runnable() {
-
-                        public void run() {
-                            text.setText(barcodes.valueAt(0).displayValue);
-                        }
-                    });
-                }
+            public void run() {
+                System.out.println("" + barcodes.valueAt(0).displayValue);
             }
         });
     }

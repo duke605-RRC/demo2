@@ -9,8 +9,8 @@
 
     <SurfaceView
         android:layout_gravity="center"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="700dp"
+        android:layout_height="500dp"
         android:id="@+id/camera_view" />
 
     <TextView
